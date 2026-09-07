@@ -24,11 +24,9 @@ for casa_id in range(1,15): #criar tabela para cada casa no BD (poder ser adapta
         CREATE TABLE IF NOT EXISTS casas(
             casa_id INT PRIMARY KEY
             )''') #tabela para todas as casas
-    
     cursor.execute(f'''
         INSERT OR IGNORE INTO casas (casa_id)
         VALUES ({casa_id})''') #inserção das cass na tabela
-    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS caixa (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,14 +68,12 @@ cursor.execute('''
     FROM casas
     ''') #procurando pelos numeros das casas
 casas = cursor.fetchall() #procura em tupla
-
 for casa in casas: #cada elemento da tupla em um array
     for casa_ in casa: #cada elemento do array
             cursor.execute(f'''
                 INSERT OR IGNORE INTO casa{casa_} (mes_ano, status, valor_cond)
                 VALUES (?,?,?)
                 ''', (mes_atual, 'NAO PAGO', 0)) #toda vez que adicionado o mes atual, as casas vêm com status de NAO PAGO
-
 conexao.commit()           
 
 def listar_casas():
@@ -86,7 +82,6 @@ def listar_casas():
         FROM casas
         ''') #procurando pelos numeros das casas
     casas = cursor.fetchall() #procura em tupla
-
     for casa in casas: #cada elemento da tupla em um array
         for casa_ in casa: #cada elemento do array
             print(f'Casa {casa_}') #exibir a lista 
@@ -96,14 +91,12 @@ def listar_status_mes():
     while True:
         mes_selecionado = input('Qual é o seu mês de pesquisa? (MM/AA) ')
         valor_achado = False #sem valor achado
-
         if len(mes_selecionado) == 5 and mes_selecionado[2] == '/': #verifica se está no padrão MM/AA
             cursor.execute('''
                 SELECT casa_id 
                 FROM casas
                 ''')
             casas = cursor.fetchall()
-
             for casa in casas:
                 for casa_ in casa:
                     cursor.execute(f'''
@@ -112,7 +105,6 @@ def listar_status_mes():
                         WHERE mes_ano = ?
                         ''', (mes_selecionado,)) #verifica se tem o mẽs
                     mes_db = cursor.fetchall()
-
                     if mes_db != []: #o mês selecionado foi encontrado
                         valor_achado = True #o valor foi achado
                         break
@@ -132,7 +124,6 @@ def listar_status_mes():
         FROM casas
         ''')
     casas = cursor.fetchall()
-
     for casa in casas:
         for casa_ in casa:
             cursor.execute(f'''
@@ -151,7 +142,6 @@ def listar_historico_casa():
     while True:
         try:
             casa_listar_status = int(input('Qual casa gostaria de consultar o histórico de pagamento? (Somente número) '))
-
             cursor.execute('''
                 SELECT casa_id
                 FROM casas
@@ -159,7 +149,6 @@ def listar_historico_casa():
             casas = cursor.fetchall()
 
             list_casas = [] #array vazio
-
             for casas_id in casas: #pega cada elemento da tupla
                 for valor in casas_id: #pega valor de cada elemento da tupla
                     list_casas.append(valor) #adiciona no array
@@ -197,7 +186,6 @@ def alt_pag_casa():
             casas = cursor.fetchall()
 
             list_casas = [] #array vazio
-
             for casas_id in casas: #pega cada elemento da tupla
                 for valor in casas_id: #pega valor de cada elemento da tupla
                     list_casas.append(valor) #adiciona no array
@@ -219,14 +207,12 @@ def alt_pag_casa():
             while True:
                 valor_achado = False
                 mes_ano = input('Qual foi o período do pagamento? (MM/AA) ')
-
                 if len(mes_ano) == 5 and mes_ano[2] == '/': #verifica se está no padrão MM/AA
                     cursor.execute('''
                         SELECT casa_id 
                         FROM casas
                         ''')
                     casas = cursor.fetchall()
-
                     for casa in casas:
                         for casa_ in casa:
                             cursor.execute(f'''
@@ -235,7 +221,6 @@ def alt_pag_casa():
                                 WHERE mes_ano = ?
                                 ''', (mes_ano,)) #verifica se tem o mẽs
                             mes_db = cursor.fetchall()
-
                             if mes_db != []: #o mês selecionado foi encontrado
                                 valor_achado = True
                                 break
@@ -302,7 +287,6 @@ def alt_pag_casa():
 def listar_pendencias():
     print('Listando pendências...')
     time.sleep(0.1)
-
     cursor.execute('''
         SELECT casa_id 
         FROM casas
@@ -379,7 +363,6 @@ def add_ret_acres():
 
             while True:
                 motivo = input('Qual motivo do acréscimo? ')
-
                 if motivo == '':
                     print('Deve relatar o motivo.')
                 else:
