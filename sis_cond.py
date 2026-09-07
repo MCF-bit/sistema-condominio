@@ -19,24 +19,29 @@ for casa_id in range(1,15): #criar tabela para cada casa no BD (poder ser adapta
             status VARCHAR(20),
             valor_cond FLOAT NOT NULL
             )''') #criar tabelas de cada casa
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS casas(
             casa_id INT PRIMARY KEY
             )''') #tabela para todas as casas
+    
     cursor.execute(f'''
         INSERT OR IGNORE INTO casas (casa_id)
         VALUES ({casa_id})''') #inserção das cass na tabela
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS caixa (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             motivo VARCHAR(120),
             caixa_valores FLOAT NOT NULL
         )''') #criar tabela caixa
+    
     cursor.execute('''
         CREATE UNIQUE INDEX IF NOT EXISTS index_motivo
         ON caixa (motivo)
         WHERE motivo = 'Pagamento do condomínio'
         ''') #criar index para tornar 'Pagamento do condominio' fixo
+    
     cursor.execute(f'''
         SELECT valor_cond
         FROM casa{casa_id}
@@ -65,12 +70,14 @@ cursor.execute('''
     FROM casas
     ''') #procurando pelos numeros das casas
 casas = cursor.fetchall() #procura em tupla
+
 for casa in casas: #cada elemento da tupla em um array
     for casa_ in casa: #cada elemento do array
             cursor.execute(f'''
                 INSERT OR IGNORE INTO casa{casa_} (mes_ano, status, valor_cond)
                 VALUES (?,?,?)
                 ''', (mes_atual, 'NAO PAGO', 0)) #toda vez que adicionado o mes atual, as casas vêm com status de NAO PAGO
+
 conexao.commit()           
 
 def listar_casas():
@@ -79,6 +86,7 @@ def listar_casas():
         FROM casas
         ''') #procurando pelos numeros das casas
     casas = cursor.fetchall() #procura em tupla
+
     for casa in casas: #cada elemento da tupla em um array
         for casa_ in casa: #cada elemento do array
             print(f'Casa {casa_}') #exibir a lista 
@@ -88,12 +96,14 @@ def listar_status_mes():
     while True:
         mes_selecionado = input('Qual é o seu mês de pesquisa? (MM/AA) ')
         valor_achado = False #sem valor achado
+
         if len(mes_selecionado) == 5 and mes_selecionado[2] == '/': #verifica se está no padrão MM/AA
             cursor.execute('''
                 SELECT casa_id 
                 FROM casas
                 ''')
             casas = cursor.fetchall()
+
             for casa in casas:
                 for casa_ in casa:
                     cursor.execute(f'''
@@ -102,6 +112,7 @@ def listar_status_mes():
                         WHERE mes_ano = ?
                         ''', (mes_selecionado,)) #verifica se tem o mẽs
                     mes_db = cursor.fetchall()
+
                     if mes_db != []: #o mês selecionado foi encontrado
                         valor_achado = True #o valor foi achado
                         break
@@ -121,6 +132,7 @@ def listar_status_mes():
         FROM casas
         ''')
     casas = cursor.fetchall()
+
     for casa in casas:
         for casa_ in casa:
             cursor.execute(f'''
@@ -139,6 +151,7 @@ def listar_historico_casa():
     while True:
         try:
             casa_listar_status = int(input('Qual casa gostaria de consultar o histórico de pagamento? (Somente número) '))
+
             cursor.execute('''
                 SELECT casa_id
                 FROM casas
@@ -146,6 +159,7 @@ def listar_historico_casa():
             casas = cursor.fetchall()
 
             list_casas = [] #array vazio
+
             for casas_id in casas: #pega cada elemento da tupla
                 for valor in casas_id: #pega valor de cada elemento da tupla
                     list_casas.append(valor) #adiciona no array
@@ -183,6 +197,7 @@ def alt_pag_casa():
             casas = cursor.fetchall()
 
             list_casas = [] #array vazio
+
             for casas_id in casas: #pega cada elemento da tupla
                 for valor in casas_id: #pega valor de cada elemento da tupla
                     list_casas.append(valor) #adiciona no array
@@ -204,12 +219,14 @@ def alt_pag_casa():
             while True:
                 valor_achado = False
                 mes_ano = input('Qual foi o período do pagamento? (MM/AA) ')
+
                 if len(mes_ano) == 5 and mes_ano[2] == '/': #verifica se está no padrão MM/AA
                     cursor.execute('''
                         SELECT casa_id 
                         FROM casas
                         ''')
                     casas = cursor.fetchall()
+
                     for casa in casas:
                         for casa_ in casa:
                             cursor.execute(f'''
@@ -218,6 +235,7 @@ def alt_pag_casa():
                                 WHERE mes_ano = ?
                                 ''', (mes_ano,)) #verifica se tem o mẽs
                             mes_db = cursor.fetchall()
+
                             if mes_db != []: #o mês selecionado foi encontrado
                                 valor_achado = True
                                 break
@@ -259,18 +277,40 @@ def alt_pag_casa():
         except ValueError:
             print('Selecione um valor válido')
 
+    soma_valores_pagos = 0
+
+    for casa in casas:
+        for casa_ in casa:
+            cursor.execute(f'''
+                SELECT valor_cond
+                FROM casa{casa_}
+''')
+            valor_pago_ = cursor.fetchall()
+
+            for valores in valor_pago_:
+                for valores_pagos in valores:
+                    soma_valores_pagos += valores_pagos #somando todos os pagamentos de todos os meses das casas 
+
+    cursor.execute(f'''
+        UPDATE caixa
+        SET caixa_valores = ?
+        WHERE motivo = ?''', (soma_valores_pagos, 'Pagamento do condomínio')) #atualizando a linha do total pagamento       
+
     print(f'A casa {casa_alt_pag} pagou R$ {valor_pago:.2f} referente ao mês {mes_ano}.')        
     conexao.commit()
 
 def listar_pendencias():
     print('Listando pendências...')
     time.sleep(0.1)
+
     cursor.execute('''
         SELECT casa_id 
         FROM casas
         ''')
     casas = cursor.fetchall()
+
     listar_casas_pendecias = []
+
     for casa in casas:
         for casa_ in casa:
             listar_casas_pendecias.append(casa_)
@@ -281,8 +321,10 @@ def listar_pendencias():
             FROM casa{casa_id}
             ''')
         status_pendencia = cursor.fetchall()
+
         for listar_status in status_pendencia:
             mes_ano, status, valor_cond = listar_status
+
             if status in ['NAO PAGO','PARCIALMENTE PAGO']: #filtra os status para 'NAO PAGO' E 'PARCIALMENTE PAGO'
                 time.sleep(0.05)
                 print(f'Casa {casa_id} - {mes_ano} - {status} - R$ {valor_cond:.2f}')
@@ -300,7 +342,9 @@ def valor_total():
         caixa_valores, motivo = resultado_valores_motivo
         print(f'R$ {caixa_valores:.2f} | {motivo}')
         time.sleep(0.05)
+
         soma_caixa_valores += caixa_valores #faz a soma dos pagamentos das casas
+
     print(40*'-')
     print(f'O valor no caixa do condomínio é R$ {soma_caixa_valores:.2f}.')
 
@@ -321,7 +365,9 @@ def add_ret_acres():
 
     while True:
         pergunta_ret_acres = input('Deseja fazer um acréscimo ou uma retirada no caixa? (+ ou -) ')
+
         if pergunta_ret_acres == '+':
+
             while True:
                 try:
                     valor_acres = float(input('Qual valor deseja acrescentar? (Somente número) ').replace(',','.'))
@@ -333,6 +379,7 @@ def add_ret_acres():
 
             while True:
                 motivo = input('Qual motivo do acréscimo? ')
+
                 if motivo == '':
                     print('Deve relatar o motivo.')
                 else:
@@ -353,7 +400,9 @@ def add_ret_acres():
             while True:
                 try:
                     valor_ret = float(input('Qual valor deseja retirar? (Somente número) ').replace(',','.'))
+
                     if type(valor_ret) == float:
+
                         if valor_ret > soma_caixa_valores:
                             print('O valor não pode ultrapassar o valor do caixa.')
                         else:
